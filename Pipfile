@@ -1,0 +1,41 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+# Production dependencies (add your package dependencies here)
+# This is a hello world package with no external dependencies
+
+[dev-packages]
+# Testing
+pytest = "*"
+pytest-cov = "*"
+
+# Linting & Formatting
+ruff = "*"
+pre-commit = "*"
+
+# Type Checking
+mypy = "*"
+
+# Security
+bandit = {extras = ["toml"], version = "*"}
+
+# Build & Publish
+build = "*"
+twine = "*"
+
+# Multi-environment testing
+tox = "*"
+
+[requires]
+python_version = "3.14"
+
+[scripts]
+test = "pytest"
+lint = "ruff check ."
+format = "ruff format ."
+typecheck = "mypy src/"
+security = "bandit -r src/ -c pyproject.toml"
+build = "python -m build"
