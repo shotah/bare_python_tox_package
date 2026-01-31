@@ -49,6 +49,7 @@
     "CREDS",
     "dmypy",
     "dotenv",
+    "envlist",
     "eventbridge",
     "exitfirst",
     "FASTAPI",

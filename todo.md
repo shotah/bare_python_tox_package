@@ -34,13 +34,14 @@ This document tracks all steps needed to get the package ready for publishing to
 
 ## Phase 3: Tox Configuration
 
-- [x] **Create tox.ini**
+- [x] **Create tox.ini** (for local dev convenience; Jenkins uses direct commands)
   - [x] Configure base testenv with pytest
   - [x] Add `py314` environment (Python 3.14 only)
   - [x] Add `lint` environment (ruff check + format)
   - [x] Add `type` environment (mypy)
   - [x] Add `security` environment (bandit)
   - [x] Add `build` environment (build wheel + sdist)
+  - [x] Add `all` environment (run all checks in one go)
   - [x] Configure coverage reporting
 
 ## Phase 4: Makefile Updates

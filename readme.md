@@ -88,30 +88,36 @@ make test
 | `make test` | Run tests with pytest |
 | `make security` | Run security checks (bandit) |
 | `make type-check` | Run type checking (mypy) |
-| `make tox` | Run tox for multi-version testing |
+| `make tox` | Run all tox environments |
+| `make check` | Run all checks (lint, type, security, test) |
 | `make build` | Build the package (wheel + sdist) |
 | `make publish` | Publish to Artifactory |
 | `make clean` | Clean build artifacts |
 
-## Tox Environments
+## Tox (Local Development)
+
+Tox provides isolated environments for running checks locally. Jenkins uses direct commands for speed, but tox is available for local dev convenience.
 
 ```bash
-# Run all environments
+# Run all default environments (py314, lint, type, security)
 make tox
 
 # Run specific environment
-pipenv run tox -e py314
 pipenv run tox -e lint
-pipenv run tox -e security
+pipenv run tox -e py314
+
+# Run all checks in one environment (faster)
+pipenv run tox -e all
 ```
 
 | Environment | Description |
 |-------------|-------------|
 | `py314` | Run tests on Python 3.14 |
-| `lint` | Run linting checks |
-| `type` | Run type checking |
-| `security` | Run security scanning |
-| `build` | Build package artifacts |
+| `lint` | Ruff linting and format check |
+| `type` | MyPy type checking |
+| `security` | Bandit security scan |
+| `build` | Build wheel and sdist |
+| `all` | Run all checks in one go |
 
 ## CI/CD Pipeline (Jenkins)
 
@@ -185,11 +191,14 @@ When ready to automate versioning, migrate to `setuptools-scm`. The pyproject.to
 
 ## Configuration Files
 
-- **pyproject.toml**: Package metadata, ruff, mypy, pytest, bandit config
-- **Pipfile**: Development and production dependencies
-- **tox.ini**: Multi-environment test configuration
-- **.pre-commit-config.yaml**: Git hook definitions
-- **Jenkinsfile**: CI/CD pipeline stages
+| File | Purpose |
+|------|---------|
+| `pyproject.toml` | Package metadata, ruff, mypy, pytest, bandit config |
+| `Pipfile` | Development and production dependencies |
+| `tox.ini` | Local dev environments (isolated checks) |
+| `.pre-commit-config.yaml` | Git hook definitions |
+| `Jenkinsfile` | CI/CD pipeline (uses direct commands for speed) |
+| `Makefile` | Developer convenience commands |
 
 ## License
 
