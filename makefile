@@ -42,6 +42,12 @@ help: ## Show this help message
 	@echo "  make build           Build package (wheel + sdist)"
 	@echo "  make publish-test    Validate dist/ with twine check"
 	@echo ""
+	@echo "Example (consumer demo — GitHub install, see example/Makefile):"
+	@echo "  make example-install Install example/.venv + requirements.txt from GitHub"
+	@echo "  make example-run     Run example/demo.py"
+	@echo "  make example-demo    example-install then example-run"
+	@echo "  make example-clean   Remove example/.venv"
+	@echo ""
 	@echo "Maintenance:"
 	@echo "  make clean           Clean virtual environment"
 	@echo "  make clean-build     Clean build artifacts"
@@ -169,6 +175,25 @@ publish-test: build ## Validate distribution artifacts (twine check only)
 	@echo ""
 	@echo "Artifacts in dist/:"
 	@ls -la dist/
+
+# ============================================================================
+# Example (consumer demo — GitHub install; logic lives in example/Makefile)
+# ============================================================================
+
+.PHONY: example-help example-install example-run example-demo example-clean
+example-help: ## Show example folder make targets
+	$(MAKE) -C example help
+
+example-install: ## Create example/.venv and pip install -r example/requirements.txt
+	$(MAKE) -C example install
+
+example-run: ## Run example/demo.py (run example-install first)
+	$(MAKE) -C example run
+
+example-demo: example-install example-run ## Install example deps from GitHub, then run demo
+
+example-clean: ## Remove example/.venv
+	$(MAKE) -C example clean
 
 # ============================================================================
 # Maintenance
