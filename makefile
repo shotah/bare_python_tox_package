@@ -20,6 +20,8 @@ help: ## Show this help message
 	@echo "  make install-dev     Install all dependencies (including dev)"
 	@echo "  make install         Install production dependencies only"
 	@echo "  make hooks           Install git pre-commit hooks"
+	@echo "  make hooks-update    Bump pre-commit hook revisions (autoupdate)"
+	@echo "  make bump            Bump package __version__ (BUMP=patch|minor|major)"
 	@echo "  make sync-dev        Sync all dependencies from Pipfile.lock"
 	@echo ""
 	@echo "Quality Checks:"
@@ -36,10 +38,9 @@ help: ## Show this help message
 	@echo "  make tox-type        Run tox type environment"
 	@echo "  make tox-security    Run tox security environment"
 	@echo ""
-	@echo "Build & Publish:"
+	@echo "Build:"
 	@echo "  make build           Build package (wheel + sdist)"
-	@echo "  make publish         Publish to Artifactory"
-	@echo "  make publish-test    Dry-run publish (check only)"
+	@echo "  make publish-test    Validate dist/ with twine check"
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  make clean           Clean virtual environment"
@@ -77,19 +78,30 @@ hooks: ## Install git pre-commit hooks
 	pip install pre-commit
 	pre-commit install || echo "pre-commit hooks already installed"
 
+.PHONY: hooks-update
+hooks-update: ## Bump pre-commit hook revisions (run pre-commit autoupdate)
+	pip install pre-commit
+	pre-commit autoupdate
+
+BUMP ?= patch
+
+.PHONY: bump
+bump: ## Bump __version__ in src/hello_world/__init__.py (BUMP=patch|minor|major)
+	python scripts/bump_version.py $(BUMP)
+
 # ============================================================================
 # Quality Checks
 # ============================================================================
 
 .PHONY: lint
 lint: ## Run all linters (ruff check + format check)
-	pipenv run ruff check src/ tests/
-	pipenv run ruff format --check src/ tests/
+	pipenv run ruff check src/ tests/ scripts/
+	pipenv run ruff format --check src/ tests/ scripts/
 
 .PHONY: lint-fix
 lint-fix: ## Run linters and auto-fix issues
-	pipenv run ruff check --fix src/ tests/
-	pipenv run ruff format src/ tests/
+	pipenv run ruff check --fix src/ tests/ scripts/
+	pipenv run ruff format src/ tests/ scripts/
 
 .PHONY: type-check
 type-check: ## Run type checking with mypy
@@ -141,7 +153,7 @@ tox-build: ## Run tox build environment
 	pipenv run tox -e build
 
 # ============================================================================
-# Build & Publish
+# Build
 # ============================================================================
 
 .PHONY: build
@@ -149,28 +161,12 @@ build: clean-build ## Build package (wheel + sdist)
 	pipenv run python -m build
 	pipenv run twine check dist/*
 
-.PHONY: publish
-publish: build ## Publish to Artifactory
-	@if [ -z "$$ARTIFACTORY_URL" ]; then \
-		echo "ERROR: ARTIFACTORY_URL not set"; \
-		exit 1; \
-	fi
-	@if [ -z "$$ARTIFACTORY_REPO" ]; then \
-		echo "ERROR: ARTIFACTORY_REPO not set"; \
-		exit 1; \
-	fi
-	pipenv run twine upload \
-		--repository-url $${ARTIFACTORY_URL}/api/pypi/$${ARTIFACTORY_REPO} \
-		-u $${ARTIFACTORY_USER} \
-		-p $${ARTIFACTORY_TOKEN} \
-		dist/*
-
 .PHONY: publish-test
-publish-test: build ## Dry-run publish (check artifacts only)
+publish-test: build ## Validate distribution artifacts (twine check only)
 	@echo "Checking distribution artifacts..."
 	pipenv run twine check dist/*
 	@echo ""
-	@echo "Artifacts ready for publishing:"
+	@echo "Artifacts in dist/:"
 	@ls -la dist/
 
 # ============================================================================

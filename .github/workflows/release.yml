@@ -1,0 +1,102 @@
+name: Release
+
+# Runs on main/master only. Does NOT bump or push — expects __version__ already set
+# (PATCH bump happened on your feature branch via bump-version.yml, or you used `make bump` locally).
+# Creates GitHub Release + tag vX.Y.Z + dist/* when that release does not exist yet.
+#
+# Skips when HEAD is chore(release): (e.g. empty follow-up after merge if that were ever tip).
+
+on:
+  push:
+    branches: [main, master]
+
+concurrency:
+  group: release-${{ github.repository }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Decide whether to publish
+        id: meta
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          MSG=$(git log -1 --pretty=%s)
+          echo "Last commit: $MSG"
+          if [[ "$MSG" == "chore(release):"* ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Skipping: tip is an automated version commit."
+            exit 0
+          fi
+
+          V=$(python <<'PY'
+          import re
+          from pathlib import Path
+
+          t = Path("src/hello_world/__init__.py").read_text(encoding="utf-8")
+          m = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', t)
+          if not m:
+              raise SystemExit("Could not parse __version__")
+          print(m.group(1))
+          PY
+          )
+          TAG="v${V}"
+          echo "version=${V}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+          if gh release view "${TAG}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Release ${TAG} already exists — skipping."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "Will publish ${TAG}."
+          fi
+
+      - name: Set up Python
+        if: steps.meta.outputs.skip == 'false'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dev dependencies
+        if: steps.meta.outputs.skip == 'false'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run checks
+        if: steps.meta.outputs.skip == 'false'
+        run: |
+          ruff check src/ tests/ scripts/
+          ruff format --check src/ tests/ scripts/
+          mypy src/
+          bandit -r src/ -c pyproject.toml
+          pytest tests/ -v
+
+      - name: Build wheel and sdist
+        if: steps.meta.outputs.skip == 'false'
+        run: |
+          python -m build
+          twine check dist/*
+
+      - name: Create GitHub Release and tag
+        if: steps.meta.outputs.skip == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.tag }}
+          files: dist/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

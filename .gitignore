@@ -177,5 +177,5 @@ test-results.xml
 .scrapy.py
 .requirements.md
 
-# PyPI config (never commit credentials)
+# PyPI / private index config (never commit credentials)
 .pypirc

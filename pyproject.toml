@@ -40,8 +40,8 @@ dev = [
 hello-world = "hello_world.main:main"
 
 [project.urls]
-Homepage = "https://your-codecommit-repo-url"
-Repository = "https://your-codecommit-repo-url"
+Homepage = "https://github.com/shotah/bare_python_tox_package"
+Repository = "https://github.com/shotah/bare_python_tox_package"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -66,7 +66,7 @@ version = {attr = "hello_world.__version__"}
 [tool.ruff]
 target-version = "py312"  # ruff doesn't support py314 yet, py312 is compatible
 line-length = 100
-src = ["src", "tests"]
+src = ["src", "tests", "scripts"]
 
 [tool.ruff.lint]
 select = [
@@ -103,6 +103,7 @@ python_version = "3.14"
 strict = true
 warn_unused_ignores = true
 mypy_path = ["src"]
+exclude = "(^|/)scripts/"
 
 [[tool.mypy.overrides]]
 module = ["tests.*"]

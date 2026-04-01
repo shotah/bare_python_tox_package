@@ -1,0 +1,68 @@
+name: Bump version
+
+# PATCH-bump __version__ on pushes to any branch except main/master.
+# Pushes back to the *same* branch (avoids branch protection on main).
+# Merge to main already carries the new version → Release workflow publishes without pushing to main.
+#
+# Limitation: PRs from forks usually cannot push to the fork from Actions (read-only token).
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - master
+
+concurrency:
+  group: bump-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+
+      - name: Skip automated version commits (loop guard)
+        id: gate
+        run: |
+          MSG=$(git log -1 --pretty=%s)
+          echo "Branch: ${{ github.ref_name }} | Last commit: $MSG"
+          if [[ "$MSG" == "chore(release):"* ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: PATCH bump
+        if: steps.gate.outputs.skip == 'false'
+        run: python scripts/bump_version.py patch --quiet
+
+      - name: Capture version for commit message
+        if: steps.gate.outputs.skip == 'false'
+        id: ver
+        run: |
+          V=$(python <<'PY'
+          import re
+          from pathlib import Path
+
+          t = Path("src/hello_world/__init__.py").read_text(encoding="utf-8")
+          m = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', t)
+          print(m.group(1))
+          PY
+          )
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push to current branch
+        if: steps.gate.outputs.skip == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/hello_world/__init__.py
+          git commit -m "chore(release): bump version to ${{ steps.ver.outputs.version }}"
+          git push origin "HEAD:${{ github.ref }}"
