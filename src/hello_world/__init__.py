@@ -4,7 +4,7 @@
 # PATCH: push to a feature branch → bump-version.yml commits here; merge to main → Release publishes.
 # On main only: run `make bump` (or edit) before push if you skip feature branches.
 # MINOR/MAJOR: make bump BUMP=minor|major on your branch, then push (bump workflow still PATCHes once).
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 from hello_world.main import greet, hello_world
 

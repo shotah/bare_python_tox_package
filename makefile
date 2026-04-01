@@ -25,12 +25,12 @@ help: ## Show this help message
 	@echo "  make sync-dev        Sync all dependencies from Pipfile.lock"
 	@echo ""
 	@echo "Quality Checks:"
-	@echo "  make lint            Run all linters (ruff check + format)"
+	@echo "  make lint            Run pre-commit on all files (same hooks as CI)"
 	@echo "  make type-check      Run type checking (mypy)"
 	@echo "  make security        Run security checks (bandit)"
 	@echo "  make test            Run tests with pytest"
 	@echo "  make test-cov        Run tests with coverage report"
-	@echo "  make check           Run all checks (lint, type, security, test)"
+	@echo "  make check           Pre-commit (skip pytest) + pytest with coverage (like CI)"
 	@echo ""
 	@echo "Tox (Multi-environment):"
 	@echo "  make tox             Run all tox environments"
@@ -94,9 +94,8 @@ bump: ## Bump __version__ in src/hello_world/__init__.py (BUMP=patch|minor|major
 # ============================================================================
 
 .PHONY: lint
-lint: ## Run all linters (ruff check + format check)
-	pipenv run ruff check src/ tests/ scripts/
-	pipenv run ruff format --check src/ tests/ scripts/
+lint: ## Run pre-commit on all files (same hooks as CI; use test-cov for coverage.xml)
+	pipenv run pre-commit run --all-files
 
 .PHONY: lint-fix
 lint-fix: ## Run linters and auto-fix issues
@@ -124,7 +123,9 @@ test-failed: ## Re-run only failed tests
 	pipenv run pytest --last-failed --exitfirst
 
 .PHONY: check
-check: lint type-check security test ## Run all checks (lint, type, security, test)
+check: ## Pre-commit + pytest with coverage (closest to CI)
+	SKIP=pytest pipenv run pre-commit run --all-files
+	pipenv run pytest tests/ -v --cov=hello_world --cov-report=term-missing
 	@echo ""
 	@echo "All checks passed!"
 

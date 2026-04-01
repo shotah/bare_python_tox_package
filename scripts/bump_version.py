@@ -75,7 +75,9 @@ def main() -> None:
     print(
         f'  git add src/hello_world/__init__.py && git commit -m "Bump version to {new_ver}" && git push'
     )
-    print("  Push a feature branch for CI patch bump, or merge to main for Release; on main only, bump locally before push.")
+    print(
+        "  Push a feature branch for CI patch bump, or merge to main for Release; on main only, bump locally before push."
+    )
 
 
 if __name__ == "__main__":
