@@ -52,6 +52,9 @@ where = ["src"]
 [tool.setuptools.dynamic]
 version = {attr = "hello_world.__version__"}
 
+[tool.setuptools]
+license-files = ["LICENSE"]
+
 # Future: To migrate to git-tag versioning, replace the above with:
 # [build-system]
 # requires = ["setuptools>=61.0", "setuptools-scm>=8.0", "wheel"]

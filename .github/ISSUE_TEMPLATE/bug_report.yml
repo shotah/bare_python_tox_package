@@ -1,0 +1,37 @@
+name: Bug report
+description: Report unexpected behavior or a defect
+title: "[bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Include enough detail for someone else to reproduce the problem.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Actual behavior, errors, or logs.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: false
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      placeholder: OS, Python version, commands, minimal example…
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: Package version (if known)
+      placeholder: e.g. 0.1.2
+    validations:
+      required: false

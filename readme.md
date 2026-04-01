@@ -24,6 +24,9 @@ A Python package template for CI/CD with **GitHub** as the source of truth. **Gi
 - **Testing**: Pytest with coverage
 - **Formatting**: Ruff formatter
 - **Pre-commit Hooks**: Automated quality gates (includes **pyupgrade** for Python 3.12+ syntax, plus Ruff’s `UP` rules)
+- **Dependabot**: Weekly PRs for **pip** (`pyproject.toml` / `Pipfile`) and **GitHub Actions** (action pins grouped into one PR). **Pre-commit** hook `rev:` lines are not managed by Dependabot — use `make hooks-update` / `pre-commit autoupdate`.
+- **CODEOWNERS**: Default review routing (`@shotah` — change after fork)
+- **Issue / PR templates**: Structured bug reports, feature requests, and a short PR checklist
 
 ## Pre-commit: staying up to date
 
@@ -56,13 +59,18 @@ This package is designed to support LTS Python versions (3.12+) while being deve
 ```
 bare-python-tox-package/
 ├── .github/
-│   └── workflows/
-│       ├── ci.yml              # PR / push: lint, test, build, coverage badge
-│       ├── bump-version.yml    # feature branches: PATCH bump + push to same branch
-│       └── release.yml         # main: publish GitHub Release if vX.Y.Z missing
+│   ├── workflows/
+│   │   ├── ci.yml              # PR / push: lint, test, build, coverage badge
+│   │   ├── bump-version.yml    # feature branches: PATCH bump + push to same branch
+│   │   └── release.yml         # main: publish GitHub Release if vX.Y.Z missing
+│   ├── ISSUE_TEMPLATE/         # bug + feature forms (blank issues still allowed)
+│   ├── dependabot.yml          # pip + GitHub Actions version updates
+│   ├── CODEOWNERS              # default reviewers (edit when forking)
+│   └── pull_request_template.md
 ├── src/
 │   └── hello_world/
 ├── tests/
+├── example/                 # consumer demo: GitHub pip install + Makefile
 ├── .pre-commit-config.yaml
 ├── Makefile
 ├── Pipfile
@@ -105,12 +113,14 @@ make test
 | `make hooks` | Install git pre-commit hooks |
 | `make hooks-update` | Run `pre-commit autoupdate` to refresh hook `rev`s |
 | `make bump` | Bump `__version__` locally (`BUMP=patch|minor|major`; on feature branches CI also PATCH-bumps on each **push**) |
-| `make lint` | Run all linters (ruff check + format check) |
+| `make lint` | Run **pre-commit** on all files (same hooks as CI) |
 | `make test` | Run tests with pytest |
 | `make security` | Run security checks (bandit) |
 | `make type-check` | Run type checking (mypy) |
 | `make tox` | Run all tox environments |
-| `make check` | Run all checks (lint, type, security, test) |
+| `make check` | Pre-commit (skip pytest) + pytest with coverage (like CI) |
+| `make example-demo` | Install `example/` deps from GitHub, run consumer demo |
+| `make example-install` / `make example-run` / `make example-clean` | Example venv install, run, or clean |
 | `make build` | Build the package (wheel + sdist) |
 | `make publish-test` | Validate `dist/*` with `twine check` |
 | `make clean` | Clean virtual environment |
@@ -130,11 +140,11 @@ pipenv run tox -e all
 | Environment | Description |
 |-------------|-------------|
 | `py314` | Run tests on Python 3.14 |
-| `lint` | Ruff linting and format check |
+| `lint` | Pre-commit (same as CI; pytest skipped via `SKIP`) |
 | `type` | MyPy type checking |
 | `security` | Bandit security scan |
 | `build` | Build wheel and sdist |
-| `all` | Run all checks in one go |
+| `all` | Pre-commit (skip pytest) + pytest with coverage |
 
 ## GitHub Actions
 
@@ -143,8 +153,8 @@ pipenv run tox -e all
 Runs on **push** and **pull_request** to `main` / `master`:
 
 1. Install with `pip install -e ".[dev]"`
-2. Ruff (lint + format check)
-3. MyPy, Bandit, Pytest with coverage (writes `coverage.xml` in Cobertura format)
+2. **Pre-commit** (`SKIP=pytest`) — same hooks as `.pre-commit-config.yaml` (Ruff, mypy, bandit, pyupgrade, file checks, …)
+3. **Pytest** with coverage (writes `coverage.xml` in Cobertura format)
 4. `python -m build` and `twine check`
 5. Upload `dist/` as a workflow artifact (handy for debugging builds)
 6. **On push to `main` only:** build a **coverage** SVG from `coverage.xml` and push it to the **`gh-pages`** branch under `badges/` (`peaceiris/actions-gh-pages`). Badges in this README use [github.com/shotah/bare_python_tox_package](https://github.com/shotah/bare_python_tox_package); fork or rename the repo as needed and update URLs.
@@ -213,6 +223,10 @@ Contributors from forks often need to bump **locally** or maintain a branch **in
 | `tox.ini` | Local dev environments (isolated checks) |
 | `.pre-commit-config.yaml` | Git hook definitions |
 | `.github/workflows/*.yml` | CI and release automation |
+| `.github/dependabot.yml` | Automated dependency PRs (pip, GitHub Actions) |
+| `.github/CODEOWNERS` | Default reviewers for new PRs |
+| `.github/ISSUE_TEMPLATE/*` | Issue forms; `config.yml` allows blank issues |
+| `.github/pull_request_template.md` | Default PR description checklist |
 | `Makefile` | Developer convenience commands |
 | `docs/legacy/Jenkinsfile` | Historical Jenkins pipeline (reference) |
 
@@ -223,4 +237,4 @@ Contributors from forks often need to bump **locally** or maintain a branch **in
 
 ## License
 
-Internal use only.
+[MIT](LICENSE) — same as `license` in `pyproject.toml`. Replace the copyright line in `LICENSE` if you fork or change authorship.
